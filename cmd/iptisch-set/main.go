@@ -16,22 +16,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	exists, _, err := conn.Exists("/test")
+	exists, _, err := conn.Exists("/wut")
 	if err != nil {
 		panic(err)
 	}
 	if !exists {
-		_, err = conn.Create("/test", []byte("nil"), 0, zk.WorldACL(zk.PermAll))
+		_, err = conn.Create("/wut", []byte("nil"), 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
 			panic(err)
 		}
 	}
-	b, s, err := conn.Get("/test")
+	b, s, err := conn.Get("/wut")
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("pulled: %s@%d\n", b, s.Version)
-	_, err = conn.Set("/test", []byte("next"), s.Version)
+	_, err = conn.Set("/wut", []byte("next"), s.Version)
 	if err != nil {
 		panic(err)
 	}

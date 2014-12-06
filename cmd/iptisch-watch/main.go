@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/samuel/go-zookeeper/zk"
+	"github.com/supershabam/iptisch"
 )
 
 const (
@@ -12,16 +11,18 @@ const (
 )
 
 func main() {
-	conn, _, err := zk.Connect([]string{ZKAddr}, time.Minute)
-	if err != nil {
-		panic(err)
+	v := iptisch.Variables{
+		Keys: []string{
+			"/test",
+			"/wut",
+		},
+		Servers: []string{ZKAddr},
 	}
-	for {
-		b, s, c, err := conn.GetW("/test")
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("has data: %s@%d\n", b, s.Version)
-		<-c
+	for m := range v.Watch() {
+		fmt.Printf("%+v\n", m)
 	}
+	if v.Err != nil {
+		panic(v.Err)
+	}
+	fmt.Printf("done\n")
 }
