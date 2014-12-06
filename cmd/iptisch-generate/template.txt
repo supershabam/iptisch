@@ -1,1 +1,2 @@
-hi |there |there |you
+this is just a |/test
+of the live templating system

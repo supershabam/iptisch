@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -11,8 +10,11 @@ import (
 )
 
 var (
-	template  = flag.String("template", "", "template file")
-	variables = flag.String("variables", "", "variables json file")
+	template = flag.String("template", "", "template file")
+)
+
+const (
+	ZKAddr = "104.131.40.109:2181"
 )
 
 func main() {
@@ -23,19 +25,21 @@ func main() {
 		panic(fmt.Errorf("could not read template file: %s", *template))
 	}
 
-	variablesBytes, err := ioutil.ReadFile(*variables)
-	if err != nil {
-		panic(fmt.Errorf("could not read variables file: %s", *variables))
-	}
-
 	t := iptisch.Template{
 		Text: string(templateBytes),
 	}
-	v := iptisch.Variables{}
-	err = json.Unmarshal(variablesBytes, &v)
-	if err != nil {
-		panic(err)
-	}
 
-	t.Execute(os.Stdout, v)
+	v := iptisch.Variables{
+		Keys: []string{
+			"/test",
+		},
+		Servers: []string{ZKAddr},
+	}
+	for m := range v.Watch() {
+		t.Execute(os.Stdout, m)
+	}
+	if v.Err != nil {
+		panic(v.Err)
+	}
+	fmt.Printf("done\n")
 }
