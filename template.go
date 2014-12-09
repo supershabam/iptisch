@@ -1,21 +1,19 @@
 package iptisch
 
-import (
-	"fmt"
-	"io"
-	"strings"
-)
+import "strings"
 
 type Template struct {
 	Text string
 }
 
-func (t Template) Execute(wr io.Writer, v map[string][]string) {
+func (t Template) Execute(v map[string][]string) string {
+	out := []string{}
 	for _, line := range strings.Split(t.Text, "\n") {
 		for _, expansion := range expand(line, v) {
-			fmt.Fprintln(wr, expansion)
+			out = append(out, expansion)
 		}
 	}
+	return strings.Join(out, "\n")
 }
 
 // simple template where a pipe becomes a special character and can't be escaped
