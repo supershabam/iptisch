@@ -1,38 +1,50 @@
 package main
 
 import (
-	"fmt"
+	"flag"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-const (
-	ZKAddr = "104.131.40.109:2181"
+var (
+	Servers = flag.String("servers", "", "zookeeper servers (comma separated) to connect to")
+	ZNode   = flag.String("znode", "", "zookeeper znode path")
 )
 
 func main() {
-	conn, _, err := zk.Connect([]string{ZKAddr}, time.Minute)
+	flag.Parse()
+	conn, _, err := zk.Connect(strings.Split(*Servers, ","), time.Minute)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	exists, _, err := conn.Exists("/test")
+	data, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+	}
+	// try to create and set if not currently existing
+	exists, _, err := conn.Exists(*ZNode)
+	if err != nil {
+		log.Fatal(err)
 	}
 	if !exists {
-		_, err = conn.Create("/test", []byte("nil"), 0, zk.WorldACL(zk.PermAll))
+		_, err = conn.Create(*ZNode, data, 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
+		return
 	}
-	b, s, err := conn.Get("/test")
+	// get and set and fail in race condition with other sets
+	_, s, err := conn.Get(*ZNode)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	fmt.Printf("pulled: %s@%d\n", b, s.Version)
-	_, err = conn.Set("/test", []byte("jerkass"), s.Version)
+	_, err = conn.Set(*ZNode, data, s.Version)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
