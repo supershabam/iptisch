@@ -1,28 +1,28 @@
 package main
 
 import (
-	"fmt"
+	"flag"
+	"log"
+	"strings"
 
 	"github.com/supershabam/iptisch"
 )
 
-const (
-	ZKAddr = "104.131.40.109:2181"
+var (
+	servers = flag.String("servers", "", "zookeeper servers to connect to")
+	znode   = flag.String("znode", "", "zookeeper znode to watch for data")
 )
 
 func main() {
-	v := iptisch.Variables{
-		Keys: []string{
-			"/test",
-			"/wut",
-		},
-		Servers: []string{ZKAddr},
+	flag.Parse()
+	w := iptisch.Watcher{
+		Servers: strings.Split(*servers, ","),
+		ZNode:   *znode,
 	}
-	for m := range v.Watch() {
-		fmt.Printf("%+v\n", m)
+	for variables := range w.Watch() {
+		log.Printf("%+v", variables)
 	}
-	if v.Err != nil {
-		panic(v.Err)
+	if w.Err != nil {
+		log.Fatal(w.Err)
 	}
-	fmt.Printf("done\n")
 }

@@ -10,7 +10,7 @@ type Template struct {
 	Text string
 }
 
-func (t Template) Execute(wr io.Writer, v map[string][]byte) {
+func (t Template) Execute(wr io.Writer, v map[string][]string) {
 	for _, line := range strings.Split(t.Text, "\n") {
 		for _, expansion := range expand(line, v) {
 			fmt.Fprintln(wr, expansion)
@@ -21,7 +21,7 @@ func (t Template) Execute(wr io.Writer, v map[string][]byte) {
 // simple template where a pipe becomes a special character and can't be escaped
 // -A MYSQL -s |staging -j ACCEPT
 // -A MYSQL -s |blacklist -j DROP
-func expand(line string, v map[string][]byte) (expansions []string) {
+func expand(line string, v map[string][]string) (expansions []string) {
 	// base case
 	if !strings.Contains(line, "|") {
 		expansions = append(expansions, line)
@@ -32,7 +32,7 @@ func expand(line string, v map[string][]byte) (expansions []string) {
 	name := key[1:] // cut off the |
 	values := v[name]
 	for _, value := range values {
-		replaced := strings.Replace(line, key, string(value), 1)
+		replaced := strings.Replace(line, key, value, 1)
 		// since multiple variables can exist in a line
 		expansions = append(expansions, expand(replaced, v)...)
 	}
