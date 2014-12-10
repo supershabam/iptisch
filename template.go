@@ -16,6 +16,28 @@ func (t Template) Execute(v map[string][]string) string {
 	return strings.Join(out, "\n")
 }
 
+// Keys extracts the keys this template expects to have provided by Variables
+func (t Template) Keys() []string {
+	keyMap := map[string]struct{}{}
+NextLine:
+	for _, line := range strings.Split(t.Text, "\n") {
+		for {
+			index := strings.Index(line, "|")
+			if index == -1 {
+				continue NextLine
+			}
+			key := strings.SplitN(line[index:], " ", 2)[0][1:]
+			keyMap[key] = struct{}{}
+			line = line[len(key)+1:]
+		}
+	}
+	keys := []string{}
+	for key, _ := range keyMap {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
 // simple template where a pipe becomes a special character and can't be escaped
 // -A MYSQL -s |staging -j ACCEPT
 // -A MYSQL -s |blacklist -j DROP

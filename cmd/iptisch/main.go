@@ -38,7 +38,7 @@ func main() {
 		Text: string(templateData),
 	}
 	w := iptisch.Watcher{
-		Keys:   []string{"key1", "key2"},
+		Keys:   t.Keys(),
 		Period: time.Second * 2,
 	}
 	for variables := range w.Watch() {
