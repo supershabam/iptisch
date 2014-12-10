@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"io/ioutil"
 	"log"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/supershabam/iptisch"
@@ -20,7 +21,6 @@ import (
 
 var (
 	template = flag.String("template", "", "template to read")
-	out      = flag.String("out", "", "output file to write")
 )
 
 func main() {
@@ -37,12 +37,13 @@ func main() {
 		Period: time.Second * 2,
 	}
 	for variables := range w.Watch() {
-		ruleset := bytes.NewBufferString(t.Execute(variables))
-		err := ioutil.WriteFile(*out, ruleset.Bytes(), 0664)
+		cmd := exec.Command("iptables-restore")
+		cmd.Stdin = strings.NewReader(t.Execute(variables))
+		err := cmd.Run()
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("wrote ruleset")
+		log.Printf("wrote rules to iptables")
 	}
 	if w.Err != nil {
 		log.Fatal(w.Err)
