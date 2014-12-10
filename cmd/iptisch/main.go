@@ -1,19 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"io/ioutil"
 	"log"
 	"time"
 
 	"github.com/supershabam/iptisch"
-)
-
-var (
-	output  string        // file to write on update
-	restore string        // path to iptables-restore command
-	period  time.Duration // pause between polls
-	dsn     string        // database
 )
 
 // failure: database not available
@@ -26,6 +20,7 @@ var (
 
 var (
 	template = flag.String("template", "", "template to read")
+	out      = flag.String("out", "", "output file to write")
 )
 
 func main() {
@@ -42,7 +37,12 @@ func main() {
 		Period: time.Second * 2,
 	}
 	for variables := range w.Watch() {
-		log.Printf("%s\n\n", t.Execute(variables))
+		ruleset := bytes.NewBufferString(t.Execute(variables))
+		err := ioutil.WriteFile(*out, ruleset.Bytes(), 0664)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("wrote ruleset")
 	}
 	if w.Err != nil {
 		log.Fatal(w.Err)
