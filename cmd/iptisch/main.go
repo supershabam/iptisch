@@ -39,8 +39,9 @@ func main() {
 	for variables := range w.Watch() {
 		cmd := exec.Command("iptables-restore")
 		cmd.Stdin = strings.NewReader(t.Execute(variables))
-		err := cmd.Run()
+		out, err := cmd.CombinedOutput()
 		if err != nil {
+			log.Println(out)
 			log.Fatal(err)
 		}
 		log.Printf("wrote rules to iptables")
