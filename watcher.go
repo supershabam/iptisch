@@ -1,42 +1,41 @@
 package iptisch
 
 import (
-	"encoding/json"
+	"fmt"
+	"math/rand"
 	"time"
-
-	"github.com/samuel/go-zookeeper/zk"
 )
 
+// A Watcher provides the variables your template needs. This one is bullshit
+// because the implementation doesn't matter.
 type Watcher struct {
-	Err     error
-	Servers []string
-	ZNode   string
+	Err    error
+	Keys   []string
+	Period time.Duration
 }
 
 func (w *Watcher) Watch() <-chan Variables {
 	out := make(chan Variables)
 	go func() {
 		defer close(out)
-		conn, _, err := zk.Connect(w.Servers, time.Minute)
-		if err != nil {
-			w.Err = err
-			return
-		}
 		for {
-			data, _, event, err := conn.GetW(w.ZNode)
-			if err != nil {
-				w.Err = err
-				return
-			}
-			var variables Variables
-			err = json.Unmarshal(data, &variables)
-			if err != nil {
-				w.Err = err
-				return
-			}
-			out <- variables
-			<-event // reloop when data changes
+			out <- gen(w.Keys)
+			time.Sleep(w.Period)
 		}
 	}()
 	return out
+}
+
+func gen(keys []string) Variables {
+	v := Variables{}
+	for _, key := range keys {
+		for _, n := range rand.Perm(rand.Intn(20)) {
+			value := fmt.Sprintf("10.0.0.%d", n)
+			if _, ok := v[key]; !ok {
+				v[key] = []string{}
+			}
+			v[key] = append(v[key], value)
+		}
+	}
+	return v
 }

@@ -4,15 +4,28 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
-	"strings"
+	"time"
 
 	"github.com/supershabam/iptisch"
 )
 
 var (
-	servers  = flag.String("servers", "", "zookeeper servers to connect to")
-	template = flag.String("template", "", "path to template file")
-	znode    = flag.String("znode", "", "zookeeper znode to watch for data")
+	output  string        // file to write on update
+	restore string        // path to iptables-restore command
+	period  time.Duration // pause between polls
+	dsn     string        // database
+)
+
+// failure: database not available
+// - avoid trampling herd
+// - last successful run should be loaded in iptables
+//
+// failure: generated firewall rules are invalid
+// - log failure, do not save file
+//
+
+var (
+	template = flag.String("template", "", "template to read")
 )
 
 func main() {
@@ -25,8 +38,8 @@ func main() {
 		Text: string(templateData),
 	}
 	w := iptisch.Watcher{
-		Servers: strings.Split(*servers, ","),
-		ZNode:   *znode,
+		Keys:   []string{"key1", "key2"},
+		Period: time.Second * 2,
 	}
 	for variables := range w.Watch() {
 		log.Printf("%s\n\n", t.Execute(variables))
