@@ -41,7 +41,7 @@ func main() {
 		cmd.Stdin = strings.NewReader(t.Execute(variables))
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Println(out)
+			log.Printf("%s\n", out)
 			log.Fatal(err)
 		}
 		log.Printf("wrote rules to iptables")
