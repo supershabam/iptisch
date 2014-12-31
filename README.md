@@ -11,13 +11,13 @@ iptables rules that have "security groups" where ip addresses can dynamically ch
 
 The format of an iptables rule file is known. It would be cumbersome to write iteration logic into the template to list all ips of a group. So, let's try and invent our own simple templating language.
 
-### expanding iptables `.eip`
+### expanding iptables `.eit`
 
 The expanding iptables template is a very simple templating language: `|` is a special character which causes the current line to explode with members of the group specified after the `|`.
 
 #### blacklist example
 
-```eip
+```eit
 # blacklist rule (text without pipes are preserved)
 -A INPUT -s |blacklist -j DROP
 # of course, you can also write non-expanding rules for non-changing rules
