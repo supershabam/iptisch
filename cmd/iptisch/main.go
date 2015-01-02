@@ -23,10 +23,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	gw := iptisch.ChildWatcher{
-		Conn:  conn,
-		Group: "test",
-		Root:  *root,
+	gw := iptisch.GroupsWatcher{
+		Watchers: []*iptisch.ChildWatcher{
+			&iptisch.ChildWatcher{
+				Conn:  conn,
+				Group: "iptisch",
+				Root:  *root,
+			},
+			&iptisch.ChildWatcher{
+				Conn:  conn,
+				Group: "jerks",
+				Root:  *root,
+			},
+		},
 	}
 
 	for group := range gw.Watch() {
