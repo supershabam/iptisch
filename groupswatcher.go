@@ -1,7 +1,6 @@
 package iptisch
 
 import (
-	"log"
 	"sync"
 )
 
@@ -40,18 +39,16 @@ func (gw *GroupsWatcher) Watch() <-chan map[string][]string {
 	wg.Add(len(gw.Watchers))
 	for _, w := range gw.Watchers {
 		go func(w *ChildWatcher) {
-			defer wg.Done() // out will be closed once all watcher goroutines exit
+			defer wg.Done()
 			cch := w.Watch()
 		Drain:
 			for {
 				select {
 				case <-gw.done:
-					w.Close()
-					// will cause cch to close
+					gw.done = nil // don't re-enter this case
+					w.Close()     // will cause cch to close when drained
 				case children, next := <-cch:
-					log.Printf("child event for group: %s", w.Group)
 					if !next {
-						log.Printf("breaking...")
 						break Drain
 					}
 					l.Lock()
@@ -63,11 +60,8 @@ func (gw *GroupsWatcher) Watch() <-chan map[string][]string {
 					}
 				}
 			}
-			log.Printf("exiting group: %s", w.Group)
-			log.Printf("err: %s", w.Err())
 			l.Lock()
 			if err := w.Err(); err != nil && gw.err == nil {
-				log.Printf("setting error")
 				gw.err = err
 				gw.Close()
 			}

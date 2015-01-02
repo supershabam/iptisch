@@ -32,7 +32,7 @@ func main() {
 			},
 			&iptisch.ChildWatcher{
 				Conn:  conn,
-				Group: "jerks",
+				Group: "test",
 				Root:  *root,
 			},
 		},
