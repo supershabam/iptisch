@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	servers = flag.String("servers", "", "comma separated list of zookeeper addresses")
-	root    = flag.String("root", "/", "zookeeper root (for namespacing)")
+	memberships = flag.String("memberships", "", "comma separated list of group+=ip")
+	servers     = flag.String("servers", "", "comma separated list of zookeeper addresses")
+	root        = flag.String("root", "/", "zookeeper root (for namespacing)")
 )
 
 func main() {
@@ -36,6 +37,10 @@ func main() {
 				Root:  *root,
 			},
 		},
+	}
+	err = iptisch.WriteMemberships(conn, *root, *memberships)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	for group := range gw.Watch() {
