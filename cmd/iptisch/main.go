@@ -4,19 +4,29 @@ import (
 	"flag"
 	"log"
 
+	"fmt"
+	"github.com/samuel/go-zookeeper/zk"
 	"github.com/supershabam/iptisch"
+	"strings"
+	"time"
 )
 
 var (
 	servers = flag.String("servers", "", "comma separated list of zookeeper addresses")
+	root    = flag.String("root", "/", "zookeeper root (for namespacing)")
 )
 
 func main() {
 	flag.Parse()
 
-	gw := iptisch.ZKGroupWatcher{
+	conn, _, err := zk.Connect(strings.Split(*servers, ","), time.Minute)
+	if err != nil {
+		log.Fatal(err)
+	}
+	gw := iptisch.ChildWatcher{
 		Conn:  conn,
 		Group: "test",
+		Root:  *root,
 	}
 
 	for group := range gw.Watch() {
@@ -24,6 +34,6 @@ func main() {
 	}
 
 	if gw.Err() != nil {
-		log.Fatal(err)
+		log.Fatal(gw.Err())
 	}
 }
