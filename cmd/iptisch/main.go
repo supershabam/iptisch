@@ -3,39 +3,58 @@ package main
 import (
 	"flag"
 	"log"
+	"sync"
 
-	"github.com/samuel/go-zookeeper/zk"
 	"github.com/supershabam/iptisch"
-	"strings"
-	"time"
 )
 
 var (
+	command     = flag.String("command", "", "command to execute each time template is compiled")
 	memberships = flag.String("memberships", "", "comma separated list of group+=ip")
-	root        = flag.String("root", "/", "zookeeper root (for namespacing)")
 	servers     = flag.String("servers", "", "comma separated list of zookeeper addresses")
 	template    = flag.String("template", "", "template to execute")
 )
 
 func main() {
+	wg := sync.WaitGroup{}
+	done := make(chan struct{})
 	flag.Parse()
-
-	conn, _, err := zk.Connect(strings.Split(*servers, ","), time.Minute)
-	if err != nil {
-		log.Fatal(err)
+	factory := iptisch.Factory{
+		Servers: *servers,
 	}
 	if len(*memberships) > 0 {
-		err = iptisch.WriteMemberships(conn, *root, *memberships)
-		if err != nil {
-			log.Fatal(err)
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			joiner, err := factory.Joiner(*memberships)
+			if err != nil {
+				log.Fatal(err)
+			}
+			go func() {
+				<-done
+				joiner.Close()
+			}()
+			if err := joiner.Join(); err != nil {
+				log.Fatal(err)
+			}
+		}()
 	}
 	if len(*template) > 0 {
-		err = iptisch.Run(conn, *root, *template)
-		if err != nil {
-			log.Fatal(err)
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			watcher, err := factory.Watcher()
+			if err != nil {
+				log.Fatal(err)
+			}
+			go func() {
+				<-done
+				watcher.Close()
+			}()
+			if err := iptisch.Run(watcher, *template, *command); err != nil {
+				log.Fatal(err)
+			}
+		}()
 	}
-	done := make(chan struct{})
-	<-done // doesn't get done for now
+	wg.Wait()
 }

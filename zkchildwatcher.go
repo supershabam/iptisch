@@ -5,9 +5,9 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-// A ChildWatcher creates a channel of the current state of the children nodes
+// A ZKChildWatcher creates a channel of the current state of the children nodes
 // in zookeeper that is updated as the children change.
-type ChildWatcher struct {
+type ZKChildWatcher struct {
 	Conn  *zk.Conn
 	Group string
 	Root  string
@@ -18,12 +18,12 @@ type ChildWatcher struct {
 
 // Close will close a currently executing watch. It is an error to call this function without
 // having first called Watch.
-func (cw *ChildWatcher) Close() {
+func (cw *ZKChildWatcher) Close() {
 	close(cw.done)
 }
 
 // Err is checked after the watch range completes to see if there was an error.
-func (cw ChildWatcher) Err() error {
+func (cw ZKChildWatcher) Err() error {
 	return cw.err
 }
 
@@ -32,7 +32,7 @@ func (cw ChildWatcher) Err() error {
 // are when the children are updated. If the group doesn't exist, then an error is set and
 // the channel is closed.
 // It is an error to call this function more than once.
-func (cw *ChildWatcher) Watch() <-chan []string {
+func (cw *ZKChildWatcher) Watch() <-chan []string {
 	cw.done = make(chan struct{})
 	out := make(chan []string)
 	go func() {
