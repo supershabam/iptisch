@@ -9,6 +9,26 @@ iptisch
 
 iptables rules that have "security groups" where ip addresses can dynamically change membership with a group
 
+## using the binary
+
+### specifying group membership
+
+You can run the long-running iptisch binary to specify that your machine is part of the `whitelist` and `anothergroup` groups.
+
+`iptisch -servers="$zookeeper_servers" -membership="whitelist+=$ip_address,anothergroup+=$ip_address"`
+
+### being notified on group change
+
+This long-running iptisch binary will execute command each time the template is executed with membership values from zookeeper.
+
+`iptisch -servers="$zookeeper_servers" -template="/path/to/template.eit" -command="/custom/dosomething.sh"`
+
+### combining!
+
+You can specify membership and execute a template in one iptisch binary
+
+`iptisch -servers="$zookeeper_servers" -template="/path/to/template.eit" -command="/custom/dosomething.sh" -membership="whitelist+=$ip_address,anothergroup+=$ip_address"`
+
 ## templating
 
 The format of an iptables rule file is known. It would be cumbersome to write iteration logic into the template to list all ips of a group. So, let's try and invent our own simple templating language.
