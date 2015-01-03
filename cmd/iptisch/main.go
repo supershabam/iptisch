@@ -2,51 +2,40 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"log"
-	"os/exec"
+
+	"github.com/samuel/go-zookeeper/zk"
+	"github.com/supershabam/iptisch"
 	"strings"
 	"time"
-
-	"github.com/supershabam/iptisch"
 )
 
-// failure: database not available
-// - avoid trampling herd
-// - last successful run should be loaded in iptables
-//
-// failure: generated firewall rules are invalid
-// - log failure, do not save file
-//
-
 var (
-	template = flag.String("template", "", "template to read")
+	memberships = flag.String("memberships", "", "comma separated list of group+=ip")
+	root        = flag.String("root", "/", "zookeeper root (for namespacing)")
+	servers     = flag.String("servers", "", "comma separated list of zookeeper addresses")
+	template    = flag.String("template", "", "template to execute")
 )
 
 func main() {
 	flag.Parse()
-	templateData, err := ioutil.ReadFile(*template)
+
+	conn, _, err := zk.Connect(strings.Split(*servers, ","), time.Minute)
 	if err != nil {
 		log.Fatal(err)
 	}
-	t := iptisch.Template{
-		Text: string(templateData),
-	}
-	w := iptisch.Watcher{
-		Keys:   t.Keys(),
-		Period: time.Second * 2,
-	}
-	for variables := range w.Watch() {
-		cmd := exec.Command("iptables-restore")
-		cmd.Stdin = strings.NewReader(t.Execute(variables))
-		out, err := cmd.CombinedOutput()
+	if len(*memberships) > 0 {
+		err = iptisch.WriteMemberships(conn, *root, *memberships)
 		if err != nil {
-			log.Printf("%s\n", out)
 			log.Fatal(err)
 		}
-		log.Printf("wrote rules to iptables")
 	}
-	if w.Err != nil {
-		log.Fatal(w.Err)
+	if len(*template) > 0 {
+		err = iptisch.Run(conn, *root, *template)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+	done := make(chan struct{})
+	<-done // doesn't get done for now
 }
