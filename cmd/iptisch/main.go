@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 
-	"fmt"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/supershabam/iptisch"
 	"strings"
@@ -13,8 +12,9 @@ import (
 
 var (
 	memberships = flag.String("memberships", "", "comma separated list of group+=ip")
-	servers     = flag.String("servers", "", "comma separated list of zookeeper addresses")
 	root        = flag.String("root", "/", "zookeeper root (for namespacing)")
+	servers     = flag.String("servers", "", "comma separated list of zookeeper addresses")
+	template    = flag.String("template", "", "template to execute")
 )
 
 func main() {
@@ -24,30 +24,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	gw := iptisch.GroupsWatcher{
-		Watchers: []*iptisch.ChildWatcher{
-			&iptisch.ChildWatcher{
-				Conn:  conn,
-				Group: "iptisch",
-				Root:  *root,
-			},
-			&iptisch.ChildWatcher{
-				Conn:  conn,
-				Group: "test",
-				Root:  *root,
-			},
-		},
+	if len(*memberships) > 0 {
+		err = iptisch.WriteMemberships(conn, *root, *memberships)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	err = iptisch.WriteMemberships(conn, *root, *memberships)
-	if err != nil {
-		log.Fatal(err)
+	if len(*template) > 0 {
+		err = iptisch.Run(conn, *root, *template)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-
-	for group := range gw.Watch() {
-		fmt.Printf("%+v\n", group)
-	}
-
-	if gw.Err() != nil {
-		log.Fatal(gw.Err())
-	}
+	done := make(chan struct{})
+	<-done // doesn't get done for now
 }
