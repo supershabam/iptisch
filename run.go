@@ -2,7 +2,6 @@ package iptisch
 
 import (
 	"fmt"
-	"github.com/samuel/go-zookeeper/zk"
 	"io/ioutil"
 	"sort"
 	"strings"
@@ -37,25 +36,14 @@ func ipMap(input map[string][]string) (output map[string][]string) {
 	return
 }
 
-func Run(conn *zk.Conn, root, path string) error {
-	raw, err := ioutil.ReadFile(path)
+func Run(watcher Watcher, template, command string) error {
+	raw, err := ioutil.ReadFile(template)
 	if err != nil {
 		return err
 	}
 	t := Template{string(raw)}
-	watchers := []*ChildWatcher{}
-	for _, group := range t.Keys() {
-		watchers = append(watchers, &ChildWatcher{
-			Conn:  conn,
-			Group: group,
-			Root:  root,
-		})
-	}
-	gw := GroupsWatcher{
-		Watchers: watchers,
-	}
 	last := ""
-	for m := range gw.Watch() {
+	for m := range watcher.Watch(t.Keys()) {
 		next := t.Execute(ipMap(m))
 		// dedupe if we generate the same result
 		if next == last {
@@ -64,7 +52,7 @@ func Run(conn *zk.Conn, root, path string) error {
 		last = next
 		fmt.Println(next)
 	}
-	if err := gw.Err(); err != nil {
+	if err := watcher.Err(); err != nil {
 		return err
 	}
 	return nil
