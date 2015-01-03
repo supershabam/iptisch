@@ -15,5 +15,7 @@ before_script:
 
 after_success:
   - "mkdir build"
+  - "ls -alh"
+  - "pwd"
   - "go build github.com/supershabam/iptisch/cmd/iptisch/main.go -o build/iptisch"
   - "travis-artifacts upload --path build/iptisch --target-path artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
