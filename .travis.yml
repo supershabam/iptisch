@@ -3,3 +3,15 @@ language: go
 
 go:
   - 1.4
+
+env:
+  global:
+    - "ARTIFACTS_S3_BUCKET=drogus-artifacts"
+    - secure: "NmWLz9clkVtXcosCRukEW2dusUQuw4EBu2AAar/tsFLaF56HDul3mKD+01oQiEXmgiLgG4st8PglN+0pFYcABDptmBs1TBmrR1lfvGWsjrGzSJz5R6K2tow9/nnSCllCSw4plU/WopO79eQ90Nwo8KdumgHvgyu2TlBnBExWcpk="
+    - secure: "J0cb/O3HyZCzKBbt8pZc943RanLYXUtKBrfHaLu6KbFA1ap9HILKtcsdNhSVK2IzbelDdrGwu4qX90L/ueueoB67LUqrVTt/PfE+s8Y4vxgk11NR7XxsnTusDcB/vsndVRIz3ExeTgpFenWwkuNe5L7l/eOOI2/IIsT7GQwm3Kk="
+
+before_script:
+  - "gem install travis-artifacts"
+
+after_success:
+  - "travis-artifacts upload --path ./.travis.yml --target-path artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
