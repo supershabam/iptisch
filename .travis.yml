@@ -15,6 +15,5 @@ before_script:
 
 after_success:
   - "mkdir build"
-  - "printenv"
   - "go build -o build/iptisch cmd/iptisch/main.go"
-  - "travis-artifacts upload --path build/iptisch --target-path artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
+  - "travis-artifacts upload --path build/iptisch:iptisch --target-path artifacts/$TRAVIS_COMMIT"
