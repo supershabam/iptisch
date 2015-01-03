@@ -3,6 +3,8 @@ iptisch
 
 [EXPERIMENT] reactive iptable rule template
 
+[![Build Status](https://travis-ci.org/supershabam/iptisch.svg?branch=master)](https://travis-ci.org/supershabam/iptisch)
+
 ## goal
 
 iptables rules that have "security groups" where ip addresses can dynamically change membership with a group
@@ -48,31 +50,19 @@ If a computer wants its IP address to be part of a group, it needs to connect to
 
 A iptisch client needs to be notified when the membership of a group changes and given the new membership. Zookeeper provides this with watches.
 
-### data model
+### data structure
 
-Groups - named collections of ip addresses
-IP Address - a single ipv4 ip address
-
-A group is specified as a normal znode created under root. If a client requests a group that does not exit, that group znode is created.
-
-If a client tries to register itself as a member of a group that does not exists, that group znode is created.
-
-A ephemeral znode is created for an ip address under the group znode. The key of the znode is a generated prefix followed by the ip address. e.g. `aT23f-1.2.3.4`
-
-Since a client can restart (or crash) it's ephemeral ip address znode under the group can still be present in the group when it tries to create a node with its ip address in the group. This is why we prefix the key.
-
-We make the IP Address key contain the ip address because getting the keys of the children of the group is a single operation. Getting the children, and then reading the values of all the children would require N operations. So, the actual value of these IP znodes is "".
-
-#### example tree
+ZooKeeper is a tree structure. Groups are the first nodes, and ip addresses are the children of groups. ZooKeeper has a built-in sequential node to prevent collisions (two places where 1.2.3.4 is defined to be part of the blacklist group).
 
 ```txt
 .
 ├── blacklist
-│   ├── aTfEG-1.2.3.4
-│   ├── s7GbA-1.2.3.4
-│   ├── 8GvJm-4.3.2.1
+│   ├── 1.2.3.4-00000001
+│   ├── 1.2.3.4-00000002
+│   ├── 4.3.2.1-00000001
 ├── frontend
-│   ├── aTfEG-3.3.3.3
-│   ├── s7GbA-4.4.4.4
-│   ├── 8GvJm-5.5.5.5
+│   ├── 3.3.3.3-00000001
+│   ├── 4.4.4.4-00000001
+│   ├── 5.5.5.5-00000001
 ```
+
