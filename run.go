@@ -1,8 +1,8 @@
 package iptisch
 
 import (
-	"fmt"
 	"io/ioutil"
+	"os/exec"
 	"sort"
 	"strings"
 )
@@ -50,7 +50,12 @@ func Run(watcher Watcher, template, command string) error {
 			continue
 		}
 		last = next
-		fmt.Println(next)
+		cmd := exec.Command(command)
+		cmd.Stdin = strings.NewReader(next)
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
 	}
 	if err := watcher.Err(); err != nil {
 		return err
