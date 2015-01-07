@@ -50,8 +50,41 @@ func Run(watcher Watcher, template, command string) error {
 			continue
 		}
 		last = next
-		cmd := exec.Command(command)
-		cmd.Stdin = strings.NewReader(next)
+		out, err := exec.Command("/sbin/iptables-save").Output()
+		if err != nil {
+			return err
+		}
+		iptisch := strings.Split(next, "\n")
+		filtered := []string{}
+		scanner := bufio.NewScanner(bytes.NewReader(out))
+		filterTable := false
+		for scanner.Scan() {
+			line := scanner.Text()
+			// state of which table we're in. Need to know if we're in filter
+			if strings.HasPrefix(line, "*") {
+				if strings.HasPrefix(line, "*filter") {
+					filterTable = true
+				} else {
+					filterTable = false
+				}
+			}
+			// if we're modifying an IPTISCH chain (first 3 characters should be "-(A|I) "
+			// we want to keep lines that route traffic into the IPTISCH chain e.g. -A INPUT -j IPTISCH_INPUT
+			// TODO do this better
+			if filterTable && strings.HasPrefix(line[3:], "IPTISCH") {
+				continue
+			}
+			// inject iptisch content right before commmit
+			if filterTable && strings.Contains(line, "COMMIT") {
+				filtered = append(filtered, iptisch...)
+			}
+			filtered = append(filtered, line)
+		}
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+		cmd := exec.Command("/sbin/iptables-restore")
+		cmd.Stdin = strings.NewReader(strings.Join(filtered, "\n"))
 		err = cmd.Run()
 		if err != nil {
 			return err
