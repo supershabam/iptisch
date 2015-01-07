@@ -1,13 +1,23 @@
 iptisch
 =======
 
-[EXPERIMENT] reactive iptable rule template
+[ALPHA] reactive iptables
 
 [![Build Status](https://travis-ci.org/supershabam/iptisch.svg?branch=master)](https://travis-ci.org/supershabam/iptisch)
 
-## goal
+*your filewall should change as your infrastructure changes*
 
-iptables rules that have "security groups" where ip addresses can dynamically change membership with a group
+example: securing a database server
+-----------------------------------
+
+You have 1 database server and multiple front-end servers that come and go as your traffic changes.
+
+From your database server run the service `iptisch -template="/etc/iptisch/rules"`
+
+Where `/etc/iptisch/rules` contains something like this
+
+```
+```
 
 ## using the binary
 
