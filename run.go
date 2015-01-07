@@ -87,6 +87,7 @@ func Run(watcher Watcher, template, command string) error {
 		if err := scanner.Err(); err != nil {
 			return err
 		}
+		log.Printf("result:\n\n", strings.Join(filtered, "\n"))
 		cmd := exec.Command("/sbin/iptables-restore")
 		cmd.Stdin = strings.NewReader(strings.Join(filtered, "\n"))
 		out, err = cmd.CombinedOutput()
