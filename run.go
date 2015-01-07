@@ -1,6 +1,8 @@
 package iptisch
 
 import (
+	"bufio"
+	"bytes"
 	"io/ioutil"
 	"os/exec"
 	"sort"
