@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io/ioutil"
+	"log"
 	"os/exec"
 	"sort"
 	"strings"
@@ -52,8 +53,9 @@ func Run(watcher Watcher, template, command string) error {
 			continue
 		}
 		last = next
-		out, err := exec.Command("/sbin/iptables-save").Output()
+		out, err := exec.Command("/sbin/iptables-save").CombinedOutput()
 		if err != nil {
+			log.Printf("%s\n", out)
 			return err
 		}
 		iptisch := strings.Split(next, "\n")
@@ -87,8 +89,9 @@ func Run(watcher Watcher, template, command string) error {
 		}
 		cmd := exec.Command("/sbin/iptables-restore")
 		cmd.Stdin = strings.NewReader(strings.Join(filtered, "\n"))
-		err = cmd.Run()
+		out, err = cmd.CombinedOutput()
 		if err != nil {
+			log.Printf("%s\n", out)
 			return err
 		}
 	}
